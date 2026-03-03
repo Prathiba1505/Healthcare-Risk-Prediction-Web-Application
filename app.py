@@ -8,7 +8,7 @@ diabetes_model = joblib.load("diabetes_model.pkl")
 st.title("🏥 Healthcare Disease Prediction System")
 st.write("Enter patient health details below")
 
-st.subheader("🧍 Basic Information")
+st.subheader("🧍Basic Information")
 name=st.text_input("Name")
 age = st.number_input("Age", 0, 120)
 sex = st.selectbox("Sex (0 = Female, 1 = Male)", [0,1])

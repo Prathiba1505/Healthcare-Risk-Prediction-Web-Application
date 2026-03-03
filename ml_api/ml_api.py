@@ -1,17 +1,27 @@
 from flask import Flask, request, jsonify
 import joblib
 import pandas as pd
+import mysql.connector
 
 app = Flask(__name__)
 
 heart_model = joblib.load("heart_model.pkl")
 diabetes_model = joblib.load("diabetes_model.pkl")
 
+db = mysql.connector.connect(
+    host="localhost",
+    user="root",
+    password="Prathiba.07",
+    database="healthcare_db"
+)
+
+cursor = db.cursor()
+
 @app.route("/predict", methods=["POST"])
 def predict():
     try:
         data = request.json
-
+        name=data["name"]
         heart_features = [
             data["age"], data["sex"], data["cp"], data["trestbps"],
             data["chol"], data["fbs"], data["restecg"], data["thalach"],
@@ -55,6 +65,30 @@ def predict():
             "diabetes_probability": round(diabetes_prob*100,2),
             "diabetes_risk": risk_level(diabetes_prob)
         }
+
+        sql = """
+        INSERT INTO patient_predictions (
+        name,
+            age, sex, cp, trestbps, chol, fbs, restecg, thalach,
+            exang, oldpeak, slope, ca, thal,
+            pregnancies, glucose, blood_pressure, skin_thickness,
+            insulin, bmi, dpf,
+            heart_pred, heart_prob, diabetes_pred, diabetes_prob
+        ) VALUES (%s,%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+        """
+
+        values = (
+            name,
+            data["age"], data["sex"], data["cp"], data["trestbps"],
+            data["chol"], data["fbs"], data["restecg"], data["thalach"],
+            data["exang"], data["oldpeak"], data["slope"], data["ca"], data["thal"],
+            pregnancies, data["glucose"], data["blood_pressure"],
+            data["skin_thickness"], data["insulin"], data["bmi"], data["dpf"],
+            heart_pred, heart_prob, diabetes_pred, diabetes_prob
+        )
+
+        cursor.execute(sql, values)
+        db.commit()
 
         return jsonify(result)
 
